@@ -47,6 +47,10 @@ public final class EurekastOneProperties {
      */
     public static final PropertyDefinition SELF_REGISTRATION = property("self-registration", BOOLEAN);
 
+    public static final String EUREKAST_ONE_METADATA_HOST = "hazelcast.host";
+    
+    public static final String EUREKAST_ONE_METADATA_PORT = "hazelcast.port";
+    
     // Prevent instantiation
     private EurekastOneProperties() {
     }

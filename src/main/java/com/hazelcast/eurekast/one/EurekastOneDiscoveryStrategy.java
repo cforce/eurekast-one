@@ -54,15 +54,16 @@ class EurekastOneDiscoveryStrategy
     private static final DynamicStringProperty EUREKA_PROPS_FILE = //
             DynamicPropertyFactory.getInstance().getStringProperty("eureka.client.props", "eureka-client");
 
-    private final EurekaClient eurekaClient;
+    private EurekaClient eurekaClient;
     private final DiscoveryManager discoveryManager;
     private final DynamicPropertyFactory dynamicPropertyFactory;
-    private final ApplicationInfoManager applicationInfoManager;
+    private ApplicationInfoManager applicationInfoManager;
 
     private final boolean selfRegistration;
     private final boolean clientMode;
 
     private final String applicationName;
+    private EurekaInstanceConfig eurekaInstanceConfig;
 
     EurekastOneDiscoveryStrategy(DiscoveryNode localNode, ILogger logger, Map<String, Comparable> properties) {
         super(logger, properties);
@@ -72,6 +73,24 @@ class EurekastOneDiscoveryStrategy
 
         this.discoveryManager = initEurekaEnvironment(localNode);
         this.eurekaClient = DiscoveryManager.getInstance().getEurekaClient();
+        this.applicationInfoManager = initApplicationInfoManager();
+        this.dynamicPropertyFactory = DynamicPropertyFactory.getInstance();
+        this.applicationName = applicationInfoManager.getInfo().getAppName();
+    }
+
+    public EurekastOneDiscoveryStrategy(EurekaInstanceConfig eurekaInstanceConfig,
+            EurekaClient eurekaClient,
+            DiscoveryNode localNode, ILogger logger,
+            Map<String, Comparable> properties) {
+        super(logger, properties);
+        
+        this.eurekaInstanceConfig = eurekaInstanceConfig;
+        this.eurekaClient = eurekaClient;
+        
+        this.selfRegistration = getOrDefault(EUREKAST_ONE_SYSTEM_PREFIX, SELF_REGISTRATION, true);
+        this.clientMode = localNode == null;
+
+        this.discoveryManager = DiscoveryManager.getInstance();
         this.applicationInfoManager = initApplicationInfoManager();
         this.dynamicPropertyFactory = DynamicPropertyFactory.getInstance();
         this.applicationName = applicationInfoManager.getInfo().getAppName();
@@ -97,15 +116,30 @@ class EurekastOneDiscoveryStrategy
         if (application != null) {
             List<InstanceInfo> instances = application.getInstances();
             for (InstanceInfo instance : instances) {
+                
+                getLogger().info("Found instance: " + instance + ", status: " + instance.getStatus());
                 // Only recognize up and running instances
                 if (instance.getStatus() != InstanceInfo.InstanceStatus.UP) {
                     continue;
                 }
 
-                InetAddress addr = mapAddress(instance);
-                int port = instance.getPort();
+//                InetAddress addr = mapAddress(instance);
+//                int port = instance.getPort();
+//                Map<String, Object> metadata = (Map) instance.getMetadata();
+//                nodes.add(new SimpleDiscoveryNode(new Address(addr, port), metadata));
+                
                 Map<String, Object> metadata = (Map) instance.getMetadata();
-                nodes.add(new SimpleDiscoveryNode(new Address(addr, port), metadata));
+                if (metadata.containsKey(EurekastOneProperties.EUREKAST_ONE_METADATA_HOST)) {
+                    InetAddress addr;
+                    try {
+                        addr = InetAddress.getByName((String) metadata.get(EurekastOneProperties.EUREKAST_ONE_METADATA_HOST));
+                        int port = Integer.parseInt((String) metadata.get(EurekastOneProperties.EUREKAST_ONE_METADATA_PORT));
+                        getLogger().info("Discovered node from Eureka at: " + addr + ":" + port);
+                        nodes.add(new SimpleDiscoveryNode(new Address(addr, port), metadata));
+                    } catch (UnknownHostException e) {
+                        getLogger().warning("InstanceInfo '" + instance + "' could not be resolved", e);
+                    }
+                }
             }
         }
         return nodes;

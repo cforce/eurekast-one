@@ -21,6 +21,8 @@ import com.hazelcast.logging.ILogger;
 import com.hazelcast.spi.discovery.DiscoveryNode;
 import com.hazelcast.spi.discovery.DiscoveryStrategy;
 import com.hazelcast.spi.discovery.DiscoveryStrategyFactory;
+import com.netflix.appinfo.EurekaInstanceConfig;
+import com.netflix.discovery.EurekaClient;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,6 +33,10 @@ public class EurekastOneDiscoveryStrategyFactory
 
     private static final Collection<PropertyDefinition> PROPERTY_DEFINITIONS = Collections
             .singleton(EurekastOneProperties.SELF_REGISTRATION);
+    
+    private static EurekaInstanceConfig eurekaInstanceConfig;
+
+    private static EurekaClient eurekaClient;
 
     public Class<? extends DiscoveryStrategy> getDiscoveryStrategyType() {
         return EurekastOneDiscoveryStrategy.class;
@@ -39,10 +45,19 @@ public class EurekastOneDiscoveryStrategyFactory
     public DiscoveryStrategy newDiscoveryStrategy(DiscoveryNode discoveryNode, ILogger logger,
                                                   Map<String, Comparable> properties) {
 
-        return new EurekastOneDiscoveryStrategy(discoveryNode, logger, properties);
+        return new EurekastOneDiscoveryStrategy(eurekaInstanceConfig, eurekaClient,
+                discoveryNode, logger, properties);
     }
-
+    
     public Collection<PropertyDefinition> getConfigurationProperties() {
         return PROPERTY_DEFINITIONS;
+    }
+
+    public static void setEurekaInstanceConfig(EurekaInstanceConfig eurekaInstanceConfig) {
+        EurekastOneDiscoveryStrategyFactory.eurekaInstanceConfig = eurekaInstanceConfig;
+    }
+
+    public static void setEurekaClient(EurekaClient eurekaClient) {
+        EurekastOneDiscoveryStrategyFactory.eurekaClient = eurekaClient;
     }
 }
