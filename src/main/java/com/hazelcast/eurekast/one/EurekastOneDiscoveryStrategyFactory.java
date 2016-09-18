@@ -45,8 +45,12 @@ public class EurekastOneDiscoveryStrategyFactory
     public DiscoveryStrategy newDiscoveryStrategy(DiscoveryNode discoveryNode, ILogger logger,
                                                   Map<String, Comparable> properties) {
 
-        return new EurekastOneDiscoveryStrategy(eurekaInstanceConfig, eurekaClient,
+        if (eurekaClient != null && eurekaInstanceConfig != null) {
+            return new EurekastOneDiscoveryStrategy(eurekaInstanceConfig, eurekaClient,
                 discoveryNode, logger, properties);
+        } else {
+            return new EurekastOneDiscoveryStrategy(discoveryNode, logger, properties);
+        }
     }
     
     public Collection<PropertyDefinition> getConfigurationProperties() {

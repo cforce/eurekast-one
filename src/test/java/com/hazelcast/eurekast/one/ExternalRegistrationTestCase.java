@@ -31,6 +31,8 @@ import org.apache.commons.configuration.AbstractConfiguration;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class ExternalRegistrationTestCase
@@ -75,9 +77,12 @@ public class ExternalRegistrationTestCase
 
     private InstanceInfo buildInstanceInfo(int port) {
         InstanceInfo.Builder builder = InstanceInfo.Builder.newBuilder();
+        Map<String, String> mt = new HashMap<String, String>();
+        mt.put(EurekastOneProperties.EUREKAST_ONE_METADATA_HOST, "localhost");
+        mt.put(EurekastOneProperties.EUREKAST_ONE_METADATA_PORT, Integer.toString(port));
         return builder.setAppName("hazelcast-test").setIPAddr("localhost").setPort(port).setVIPAddress("hazelcast-test")
                       .setStatus(InstanceInfo.InstanceStatus.UP).setInstanceId(UUID.randomUUID().toString())
-                      .setHostName("localhost").build();
+                      .setHostName("localhost").setMetadata(mt).build();
     }
 
 }
